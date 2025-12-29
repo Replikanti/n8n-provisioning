@@ -1,0 +1,202 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: n8n-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - n8n-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  n8n-main:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: n8n-main
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      # Timezone
+      - GENERIC_TIMEZONE=Europe/Prague
+      - TZ=Europe/Prague
+
+      # n8n Configuration
+      - N8N_PROTOCOL=https
+      - N8N_HOST=n8n.replikanti.xyz
+      - WEBHOOK_URL=https://n8n.replikanti.xyz/
+      - N8N_PROXY_HOPS=1
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_SECURE_COOKIE=false
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - N8N_GIT_NODE_DISABLE_BARE_REPOS=true
+
+      # Queue Mode - Main Instance (UI only)
+      - EXECUTIONS_MODE=queue
+      - N8N_DISABLE_PRODUCTION_MAIN_PROCESS=true
+
+      # PostgreSQL Database
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=ep-flat-wind-ag3jl0bm-pooler.c-2.eu-central-1.aws.neon.tech
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=neondb
+      - DB_POSTGRESDB_USER=neondb_owner
+      - DB_POSTGRESDB_PASSWORD=npg_E6TmXVuvyiA3
+      - DB_POSTGRESDB_SSL_ENABLED=true
+      - DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false
+
+      # Executions Storage Settings
+      - EXECUTIONS_DATA_SAVE_ON_SUCCESS=true
+      - EXECUTIONS_DATA_SAVE_ON_ERROR=true
+      - EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS=true
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=48
+      - EXECUTIONS_DATA_PRUNE_MAX_COUNT=100
+
+      # Redis Queue Configuration (BullMQ)
+      - QUEUE_BULL_REDIS_HOST=redis
+      - QUEUE_BULL_REDIS_PORT=6379
+      - QUEUE_BULL_REDIS_DB=0
+
+      # Redis Cache Configuration
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_HOST=redis
+      - CACHE_REDIS_PORT=6379
+      - CACHE_REDIS_DB=1
+      - CACHE_REDIS_TTL=3600
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - /srv/n8n-ruian:/data/ruian
+    networks:
+      - n8n-network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  n8n-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: n8n-worker
+    restart: unless-stopped
+    command: worker
+    environment:
+      # Timezone
+      - GENERIC_TIMEZONE=Europe/Prague
+      - TZ=Europe/Prague
+
+      # Queue Mode - Worker
+      - EXECUTIONS_MODE=queue
+
+      # PostgreSQL Database
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=ep-flat-wind-ag3jl0bm-pooler.c-2.eu-central-1.aws.neon.tech
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=neondb
+      - DB_POSTGRESDB_USER=neondb_owner
+      - DB_POSTGRESDB_PASSWORD=npg_E6TmXVuvyiA3
+      - DB_POSTGRESDB_SSL_ENABLED=true
+      - DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false
+
+      # Redis Queue Configuration (BullMQ)
+      - QUEUE_BULL_REDIS_HOST=redis
+      - QUEUE_BULL_REDIS_PORT=6379
+      - QUEUE_BULL_REDIS_DB=0
+
+      # Redis Cache Configuration
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_HOST=redis
+      - CACHE_REDIS_PORT=6379
+      - CACHE_REDIS_DB=1
+      - CACHE_REDIS_TTL=3600
+
+      # Worker Configuration
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - N8N_GIT_NODE_DISABLE_BARE_REPOS=true
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - /srv/n8n-ruian:/data/ruian
+    networks:
+      - n8n-network
+    depends_on:
+      redis:
+        condition: service_healthy
+      n8n-main:
+        condition: service_started
+
+  n8n-webhook:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: n8n-webhook
+    restart: unless-stopped
+    command: webhook
+    ports:
+      - "127.0.0.1:5679:5678"
+    environment:
+      # Timezone
+      - GENERIC_TIMEZONE=Europe/Prague
+      - TZ=Europe/Prague
+
+      # n8n Configuration for Webhooks
+      - N8N_PROTOCOL=https
+      - N8N_HOST=n8n.replikanti.xyz
+      - WEBHOOK_URL=https://n8n.replikanti.xyz/
+      - N8N_PROXY_HOPS=1
+
+      # Queue Mode - Webhook
+      - EXECUTIONS_MODE=queue
+
+      # PostgreSQL Database
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=ep-flat-wind-ag3jl0bm-pooler.c-2.eu-central-1.aws.neon.tech
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=neondb
+      - DB_POSTGRESDB_USER=neondb_owner
+      - DB_POSTGRESDB_PASSWORD=npg_E6TmXVuvyiA3
+      - DB_POSTGRESDB_SSL_ENABLED=true
+      - DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false
+
+      # Redis Queue Configuration (BullMQ)
+      - QUEUE_BULL_REDIS_HOST=redis
+      - QUEUE_BULL_REDIS_PORT=6379
+      - QUEUE_BULL_REDIS_DB=0
+
+      # Redis Cache Configuration
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_HOST=redis
+      - CACHE_REDIS_PORT=6379
+      - CACHE_REDIS_DB=1
+      - CACHE_REDIS_TTL=3600
+
+      # Webhook Configuration
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - N8N_GIT_NODE_DISABLE_BARE_REPOS=true
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - /srv/n8n-ruian:/data/ruian
+    networks:
+      - n8n-network
+    depends_on:
+      redis:
+        condition: service_healthy
+      n8n-main:
+        condition: service_started
+
+networks:
+  n8n-network:
+    driver: bridge
+
+volumes:
+  n8n_data:
+    name: n8n_data
+  redis_data:
+    name: redis_data
