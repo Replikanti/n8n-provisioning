@@ -12,5 +12,5 @@ if [ ! -d "/home/node/.n8n/nodes/node_modules/n8n-nodes-puppeteer" ]; then
   echo "Installation complete!"
 fi
 
-# Spusť původní entrypoint
-exec /docker-entrypoint-original.sh "$@"
+# Spusť n8n
+exec n8n "$@"
