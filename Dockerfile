@@ -4,18 +4,18 @@ FROM n8nio/n8n:latest
 # Přepni na root pro instalace
 USER root
 
-# Nainstaluj Chrome a závislosti
-RUN apk update && apk add --no-cache \
+# Nainstaluj Chrome a závislosti (Debian/Ubuntu)
+RUN apt-get update && apt-get install -y \
     chromium \
-    chromium-chromedriver \
-    nss \
-    freetype \
-    freetype-dev \
-    harfbuzz \
+    chromium-driver \
+    libnss3 \
+    libfreetype6 \
+    libharfbuzz0b \
     ca-certificates \
-    ttf-freefont \
+    fonts-liberation \
     wget \
-    curl
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Nastav Puppeteer proměnné
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
