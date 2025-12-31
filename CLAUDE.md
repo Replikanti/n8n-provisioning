@@ -18,11 +18,12 @@ The deployment runs four containerized services:
    - Database 1: Application cache
    - Persistence: AOF (append-only file) with 512MB memory limit
 
-2. **n8n-main** (`n8n-main`): Web UI and API server
+2. **n8n-main** (`n8n-main`): Web UI, API server, and trigger scheduler
    - Port: 5678 (localhost only)
-   - Role: User interface, workflow management, API endpoints
+   - Role: User interface, workflow management, API endpoints, **cron/schedule triggers**
    - Does NOT execute workflows (queues them to Redis instead)
-   - Environment: `EXECUTIONS_MODE=queue`, `N8N_DISABLE_PRODUCTION_MAIN_PROCESS=true`
+   - Environment: `EXECUTIONS_MODE=queue`
+   - Note: Triggers (cron, schedule, polling) must run on main - cannot be separated in n8n
 
 3. **n8n-worker** (`n8n-worker`): Workflow execution engine
    - No exposed ports
@@ -42,7 +43,7 @@ The deployment runs four containerized services:
 - **Dockerfile**: Extends `n8nio/n8n:latest` with Chromium/Puppeteer support
 - **docker-entrypoint.sh**: Auto-installs `n8n-nodes-puppeteer` on first run
 - **docker-compose.yml**: Orchestrates all four services with proper dependencies
-- **run-compose.sh**: Build and deployment automation with image pruning
+- **run.sh**: Build and deployment automation with image pruning
 
 ### Why Queue Mode?
 
@@ -57,8 +58,8 @@ Queue mode moves workflow execution out of the PostgreSQL database into Redis:
 
 ```bash
 # Primary deployment command (builds, prunes old images, starts stack)
-./run-compose.sh
-chmod +x run-compose.sh  # Make executable if needed
+./run.sh
+chmod +x run.sh  # Make executable if needed
 
 # View all running services
 docker-compose ps

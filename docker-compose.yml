@@ -39,9 +39,8 @@ services:
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       - N8N_GIT_NODE_DISABLE_BARE_REPOS=true
 
-      # Queue Mode - Main Instance (UI only)
+      # Queue Mode - Main Instance (UI + triggers, execution via workers)
       - EXECUTIONS_MODE=queue
-      - N8N_DISABLE_PRODUCTION_MAIN_PROCESS=true
 
       # PostgreSQL Database
       - DB_TYPE=postgresdb
