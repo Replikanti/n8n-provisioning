@@ -39,11 +39,10 @@ services:
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       - N8N_GIT_NODE_DISABLE_BARE_REPOS=true
 
-      # Queue Mode - Main Instance (UI only)
+      # Queue Mode - Main Instance (UI + triggers, execution via workers)
       - EXECUTIONS_MODE=queue
-      - N8N_DISABLE_PRODUCTION_MAIN_PROCESS=true
 
-      # PostgreSQL Database
+      # PostgreSQL Database (Neon serverless)
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=ep-flat-wind-ag3jl0bm-pooler.c-2.eu-central-1.aws.neon.tech
       - DB_POSTGRESDB_PORT=5432
@@ -52,6 +51,9 @@ services:
       - DB_POSTGRESDB_PASSWORD=npg_E6TmXVuvyiA3
       - DB_POSTGRESDB_SSL_ENABLED=true
       - DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false
+      # Neon cold start can take 5-10s, increase timeouts
+      - DB_POSTGRESDB_CONNECTION_TIMEOUT=60000
+      - DB_POSTGRESDB_POOL_SIZE=10
 
       # Executions Storage Settings
       - EXECUTIONS_DATA_SAVE_ON_SUCCESS=true
@@ -96,7 +98,7 @@ services:
       # Queue Mode - Worker
       - EXECUTIONS_MODE=queue
 
-      # PostgreSQL Database
+      # PostgreSQL Database (Neon serverless)
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=ep-flat-wind-ag3jl0bm-pooler.c-2.eu-central-1.aws.neon.tech
       - DB_POSTGRESDB_PORT=5432
@@ -105,6 +107,9 @@ services:
       - DB_POSTGRESDB_PASSWORD=npg_E6TmXVuvyiA3
       - DB_POSTGRESDB_SSL_ENABLED=true
       - DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false
+      # Neon cold start can take 5-10s, increase timeouts
+      - DB_POSTGRESDB_CONNECTION_TIMEOUT=60000
+      - DB_POSTGRESDB_POOL_SIZE=10
 
       # Redis Queue Configuration (BullMQ)
       - QUEUE_BULL_REDIS_HOST=redis
@@ -155,7 +160,7 @@ services:
       # Queue Mode - Webhook
       - EXECUTIONS_MODE=queue
 
-      # PostgreSQL Database
+      # PostgreSQL Database (Neon serverless)
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=ep-flat-wind-ag3jl0bm-pooler.c-2.eu-central-1.aws.neon.tech
       - DB_POSTGRESDB_PORT=5432
@@ -164,6 +169,9 @@ services:
       - DB_POSTGRESDB_PASSWORD=npg_E6TmXVuvyiA3
       - DB_POSTGRESDB_SSL_ENABLED=true
       - DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false
+      # Neon cold start can take 5-10s, increase timeouts
+      - DB_POSTGRESDB_CONNECTION_TIMEOUT=60000
+      - DB_POSTGRESDB_POOL_SIZE=10
 
       # Redis Queue Configuration (BullMQ)
       - QUEUE_BULL_REDIS_HOST=redis
