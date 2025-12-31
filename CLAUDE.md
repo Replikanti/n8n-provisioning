@@ -43,7 +43,7 @@ The deployment runs four containerized services:
 - **Dockerfile**: Extends `n8nio/n8n:latest` with Chromium/Puppeteer support
 - **docker-entrypoint.sh**: Auto-installs `n8n-nodes-puppeteer` on first run
 - **docker-compose.yml**: Orchestrates all four services with proper dependencies
-- **run-compose.sh**: Build and deployment automation with image pruning
+- **run.sh**: Build and deployment automation with image pruning
 
 ### Why Queue Mode?
 
@@ -58,8 +58,8 @@ Queue mode moves workflow execution out of the PostgreSQL database into Redis:
 
 ```bash
 # Primary deployment command (builds, prunes old images, starts stack)
-./run-compose.sh
-chmod +x run-compose.sh  # Make executable if needed
+./run.sh
+chmod +x run.sh  # Make executable if needed
 
 # View all running services
 docker-compose ps
